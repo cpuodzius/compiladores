@@ -1,4 +1,5 @@
 # Object files
+bin
 *.o
 *.ko
 *.obj
@@ -27,3 +28,7 @@
 *.i*86
 *.x86_64
 *.hex
+
+# Restore file
+*.swp
+*.swo

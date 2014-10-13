@@ -13,7 +13,7 @@ def main(argv=None):
 		output = output[:-3] + "},\n"
 		state += 1
 	output = output[:-2] + "\n};"
-	fout = open('machine_state_C.txt', 'w')
+	fout = open('machine_state.h', 'w')
 	fout.write(output)
 	fout.close()
 
