@@ -18,6 +18,7 @@ typedef enum tipo {
 	T_ATRIBUICAO,
 	T_OPERADOR,
 	T_COMENTARIO,
+	T_NONE
 } TIPO;
 
 struct token {
@@ -28,6 +29,7 @@ struct token {
 
 void print_token(struct token token);
 
+#define INPUT_RANGE			256
 #define SYMBOL_TABLE_SIZE	100
 #define MAX_VAR_SIZE		32
 #define MAX_TEXT_SIZE		128
@@ -76,9 +78,6 @@ char *reservado[] = {
 	"END"
 };
 
-char terminal[] = {'\n',' ', '(', '[', '{', '}', ']', ')'}; // Só não é válido quando está na leitura de um text (estado 11) 
-
-
 /**********************************************************/
 void get_next_char(FILE *src, char *current, char *lookahead) {
 	*current = *lookahead;
@@ -91,29 +90,111 @@ void get_next_char(FILE *src, char *current, char *lookahead) {
 
 int next_state(int *state, char input, char buffer[32], int *buffer_idx) {
 	buffer[*buffer_idx] = input;
-	int i, not_terminal = 1;
-	if(input < ' ') {	// caracter de controle
-		not_terminal = 0;
+	char not_terminal[INPUT_RANGE];
+	int i, index = 0; not_final = 0;
+	switch(*state) {
+		case 0:
+			for(i = 0; i <= 9; i++)
+				not_terminal[index++] = '0' + i;
+			for(i = 'a'; i <= 'z'; i++)
+				not_terminal[index++] = 'a' + i;
+			for(i = 'A'; i <= 'Z'; i++)
+				not_terminal[index++] = 'A' + i;
+			not_terminal[index++] = '_';
+			not_terminal[index++] = '\"';
+			not_terminal[index++] = '+';
+			not_terminal[index++] = '-';
+			not_terminal[index++] = '/';
+			not_terminal[index++] = '*';
+			not_terminal[index++] = '<';
+			not_terminal[index++] = '=';
+			not_terminal[index++] = '>';
+			not_terminal[index++] = '#';
+			not_terminal[index++] = '.';
+			break;
+		case 1:
+			for(i = 0; i <= 9; i++)
+				not_terminal[index++] = '0' + i;
+			not_terminal[index++] = '.';
+			break;
+		case 2:
+			for(i = 0; i <= 9; i++)
+				not_terminal[index++] = '0' + i;
+			break;
+		case 3:
+			for(i = 0; i <= 9; i++)
+				not_terminal[index++] = '0' + i;
+			for(i = 'a'; i <= 'z'; i++)
+				not_terminal[index++] = 'a' + i;
+			for(i = 'A'; i <= 'Z'; i++)
+				not_terminal[index++] = 'A' + i;
+			not_terminal[index++] = '_';
+			break;
+		case 4:
+			not_terminal[index++] = '=';
+			break;
+		case 5:
+			not_terminal[index++] = '>';
+			break;
+		case 6:
+			not_terminal[index++] = '=';
+			break;
+		case 10:
+			for(i = 0; i <= 9; i++)
+				not_terminal[index++] = '0' + i;
+			for(i = 'a'; i <= 'z'; i++)
+				not_terminal[index++] = 'a' + i;
+			for(i = 'A'; i <= 'Z'; i++)
+				not_terminal[index++] = 'A' + i;
+			not_terminal[index++] = '_';
+			not_terminal[index++] = '\"';
+			not_terminal[index++] = '+';
+			not_terminal[index++] = '-';
+			not_terminal[index++] = '/';
+			not_terminal[index++] = '*';
+			not_terminal[index++] = '<';
+			not_terminal[index++] = '=';
+			not_terminal[index++] = '>';
+			not_terminal[index++] = ' ';
+			not_terminal[index++] = '(';
+			not_terminal[index++] = ')';
+			not_terminal[index++] = '{';
+			not_terminal[index++] = '}';
+			not_terminal[index++] = '[';
+			not_terminal[index++] = ']';
+			not_terminal[index++] = '\t';
+			not_terminal[index++] = '\n';
+			not_terminal[index++] = '!';
+			not_terminal[index++] = '?';
+			not_terminal[index++] = '.';
+			not_terminal[index++] = ',';
+			not_terminal[index++] = ';';
+			not_terminal[index++] = ':';
+			not_terminal[index++] = '#';
+			not_terminal[index++] = '%';
+			not_terminal[index++] = '@';
+			break;
+		case 12:
+			not_terminal[index++] = '+';
+			break;
+		case 13:
+			not_terminal[index++] = '-';
+			break;
+		default:
+			break;
 	}
-	else {
-		if(*state == 11) {
-			if(strcmp(input, "\"") == 0) {
-				not_terminal = 0;
-			}
-		}
-		else {
-			for(i = 0; i < sizeof(terminal); i++) {
-				if(input == terminal[i]) {
-					not_terminal = 0;
-					break;
-				}
-			}
+
+	for(i = 0; i < index; i++) {
+		if(input == not_terminal[i]) {
+			not_final = 1;
+			break;
 		}
 	}
+
 	if(not_terminal)
 		*buffer_idx += 1;
 	buffer[*buffer_idx] = '\0';
-	return not_terminal;
+	return not_final;
 }
 
 struct token get_token(FILE *src, char *current, char *lookahead, int *linha, int *coluna) {
@@ -124,20 +205,26 @@ struct token get_token(FILE *src, char *current, char *lookahead, int *linha, in
 
 	do {
 		get_next_char(src, current, lookahead);
-		*coluna += 1;
+		
+		if(*current == '\n') {
+			*coluna = 0;
+			*linha =+ 1;
+		}
+		else
+			*coluna += 1;
+
 		if(*current == EOF)
 			break;
 	} while(next_state(&state, *current, buffer, &buffer_idx));
-
-	if(*current == '\n') {
-		*coluna = 0;
-		*linha =+ 1;
-	}
 
 	int index_reservado;
 	int index_var;
 	// Decidir tipo do token
 	switch(state) {
+		case 0:
+			token.tipo = T_NONE;
+			token.linha = *linha;
+			token.coluna = *coluna;
 		case 1:
 			token.tipo = T_INT;
 			token.valor = int_table_index;
@@ -224,44 +311,44 @@ struct token get_token(FILE *src, char *current, char *lookahead, int *linha, in
 			token.valor = MAIOR_OU_IGUAL;
 			token.linha = *linha;
 			token.coluna = *coluna;
-		case 12:
+		case 11:
 			token.tipo = T_TEXT;
 			token.valor = text_table_index;
 			strcpy(text_table[text_table_index++], string_to_text(buffer));
 			token.linha = *linha;
 			token.coluna = *coluna;
 			break;
-		case 13:
+		case 12:
 			token.tipo = T_OPERADOR;
 			token.valor = SOMA;
 			token.linha = *linha;
 			token.coluna = *coluna;
 			break;
-		case 14:
+		case 13:
 			token.tipo = T_OPERADOR;
 			token.valor = SUBTRACAO;
 			token.linha = *linha;
 			token.coluna = *coluna;
 			break;
-		case 15:
+		case 14:
 			token.tipo = T_OPERADOR;
 			token.valor = INCREMENTO;
 			token.linha = *linha;
 			token.coluna = *coluna;
 			break;
-		case 16:
+		case 15:
 			token.tipo = T_OPERADOR;
 			token.valor = DECREMENTO;
 			token.linha = *linha;
 			token.coluna = *coluna;
 			break;
-		case 17:
+		case 16:
 			token.tipo = T_OPERADOR;
 			token.valor = MULTIPLICACAO;
 			token.linha = *linha;
 			token.coluna = *coluna;
 			break;
-		case 18:
+		case 17:
 			token.tipo = T_OPERADOR;
 			token.valor = DIVISAO;
 			token.linha = *linha;
