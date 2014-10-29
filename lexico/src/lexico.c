@@ -91,17 +91,17 @@ void get_next_char(FILE *src, char *current, char *lookahead) {
 int next_state(int *state, char input, char buffer[32], int *buffer_idx) {
 	buffer[*buffer_idx] = input;
 	char not_terminal[INPUT_RANGE];
-	int i, index = 0; not_final = 0;
+	int i, index = 0, not_final = 0;
 	switch(*state) {
 		case 0:
-			for(i = 0; i <= 9; i++)
-				not_terminal[index++] = '0' + i;
+			for(i = '0'; i <= '9'; i++)
+				not_terminal[index++] = i;
 			for(i = 'a'; i <= 'z'; i++)
-				not_terminal[index++] = 'a' + i;
+				not_terminal[index++] = i;
 			for(i = 'A'; i <= 'Z'; i++)
-				not_terminal[index++] = 'A' + i;
+				not_terminal[index++] = i;
 			not_terminal[index++] = '_';
-			not_terminal[index++] = '\"';
+			not_terminal[index++] = '"';
 			not_terminal[index++] = '+';
 			not_terminal[index++] = '-';
 			not_terminal[index++] = '/';
@@ -113,21 +113,21 @@ int next_state(int *state, char input, char buffer[32], int *buffer_idx) {
 			not_terminal[index++] = '.';
 			break;
 		case 1:
-			for(i = 0; i <= 9; i++)
-				not_terminal[index++] = '0' + i;
+			for(i = '0'; i <= '9'; i++)
+				not_terminal[index++] = i;
 			not_terminal[index++] = '.';
 			break;
 		case 2:
-			for(i = 0; i <= 9; i++)
-				not_terminal[index++] = '0' + i;
+			for(i = '0'; i <= '9'; i++)
+				not_terminal[index++] = i;
 			break;
 		case 3:
-			for(i = 0; i <= 9; i++)
-				not_terminal[index++] = '0' + i;
+			for(i = '0'; i <= '9'; i++)
+				not_terminal[index++] = i;
 			for(i = 'a'; i <= 'z'; i++)
-				not_terminal[index++] = 'a' + i;
+				not_terminal[index++] = i;
 			for(i = 'A'; i <= 'Z'; i++)
-				not_terminal[index++] = 'A' + i;
+				not_terminal[index++] = i;
 			not_terminal[index++] = '_';
 			break;
 		case 4:
@@ -140,14 +140,14 @@ int next_state(int *state, char input, char buffer[32], int *buffer_idx) {
 			not_terminal[index++] = '=';
 			break;
 		case 10:
-			for(i = 0; i <= 9; i++)
-				not_terminal[index++] = '0' + i;
+			for(i = '0'; i <= '9'; i++)
+				not_terminal[index++] = i;
 			for(i = 'a'; i <= 'z'; i++)
-				not_terminal[index++] = 'a' + i;
+				not_terminal[index++] = i;
 			for(i = 'A'; i <= 'Z'; i++)
-				not_terminal[index++] = 'A' + i;
+				not_terminal[index++] = i;
 			not_terminal[index++] = '_';
-			not_terminal[index++] = '\"';
+			not_terminal[index++] = '"';
 			not_terminal[index++] = '+';
 			not_terminal[index++] = '-';
 			not_terminal[index++] = '/';
@@ -173,6 +173,7 @@ int next_state(int *state, char input, char buffer[32], int *buffer_idx) {
 			not_terminal[index++] = '#';
 			not_terminal[index++] = '%';
 			not_terminal[index++] = '@';
+			not_terminal[index++] = ' ';
 			break;
 		case 12:
 			not_terminal[index++] = '+';
@@ -184,15 +185,19 @@ int next_state(int *state, char input, char buffer[32], int *buffer_idx) {
 			break;
 	}
 
+	//printf("lido: %c\n{ ", input);
 	for(i = 0; i < index; i++) {
+	//	printf("%c ", not_terminal[i]);
 		if(input == not_terminal[i]) {
 			not_final = 1;
 			break;
 		}
 	}
+	//printf("}\n");
 
-	if(not_terminal)
-		*buffer_idx += 1;
+	if(not_final)
+		*state = state_machine[*state][(int)input];
+	*buffer_idx += 1;
 	buffer[*buffer_idx] = '\0';
 	return not_final;
 }
@@ -203,7 +208,9 @@ struct token get_token(FILE *src, char *current, char *lookahead, int *linha, in
 	char buffer[128];
 	int buffer_idx = 0;
 
+	//printf("\n\nEstados: ");
 	do {
+		//printf("%d ", state);
 		get_next_char(src, current, lookahead);
 		
 		if(*current == '\n') {
@@ -217,6 +224,8 @@ struct token get_token(FILE *src, char *current, char *lookahead, int *linha, in
 			break;
 	} while(next_state(&state, *current, buffer, &buffer_idx));
 
+	//printf("\nToken: %s\n", buffer);
+
 	int index_reservado;
 	int index_var;
 	// Decidir tipo do token
@@ -225,6 +234,7 @@ struct token get_token(FILE *src, char *current, char *lookahead, int *linha, in
 			token.tipo = T_NONE;
 			token.linha = *linha;
 			token.coluna = *coluna;
+			break;
 		case 1:
 			token.tipo = T_INT;
 			token.valor = int_table_index;
@@ -252,21 +262,18 @@ struct token get_token(FILE *src, char *current, char *lookahead, int *linha, in
 				token.tipo = T_COMENTARIO;
 				token.linha = *linha;
 				token.coluna = *coluna;
-				break;
 			}
 			else if(strcmp(buffer, "TRUE") == 0) {
 				token.tipo = T_BOOLEAN;
 				token.valor = 1;
 				token.linha = *linha;
 				token.coluna = *coluna;
-				break;
 			}
 			else if(strcmp(buffer, "FALSE") == 0) {
 				token.tipo = T_BOOLEAN;
 				token.valor = 0;
 				token.linha = *linha;
 				token.coluna = *coluna;
-				break;
 			}
 			else {
 				token.tipo = T_VAR;
@@ -286,31 +293,36 @@ struct token get_token(FILE *src, char *current, char *lookahead, int *linha, in
 			token.valor = MENOR;
 			token.linha = *linha;
 			token.coluna = *coluna;
+			break;
 		case 5:
 			token.tipo = T_COMPARACAO;
 			token.valor = IGUAL;
 			token.linha = *linha;
 			token.coluna = *coluna;
+			break;
 		case 6:
 			token.tipo = T_COMPARACAO;
 			token.valor = MAIOR;
 			token.linha = *linha;
 			token.coluna = *coluna;
+			break;
 		case 7:
 			token.tipo = T_COMPARACAO;
 			token.valor = MENOR_OU_IGUAL;
 			token.linha = *linha;
 			token.coluna = *coluna;
+			break;
 		case 8:
-			token.tipo = T_RESERVADO;
-			token.valor = MAIOR;
+			token.tipo = T_ATRIBUICAO;
 			token.linha = *linha;
 			token.coluna = *coluna;
+			break;
 		case 9:
 			token.tipo = T_COMPARACAO;
 			token.valor = MAIOR_OU_IGUAL;
 			token.linha = *linha;
 			token.coluna = *coluna;
+			break;
 		case 11:
 			token.tipo = T_TEXT;
 			token.valor = text_table_index;
@@ -344,13 +356,13 @@ struct token get_token(FILE *src, char *current, char *lookahead, int *linha, in
 			break;
 		case 16:
 			token.tipo = T_OPERADOR;
-			token.valor = MULTIPLICACAO;
+			token.valor = DIVISAO;
 			token.linha = *linha;
 			token.coluna = *coluna;
 			break;
 		case 17:
 			token.tipo = T_OPERADOR;
-			token.valor = DIVISAO;
+			token.valor = MULTIPLICACAO;
 			token.linha = *linha;
 			token.coluna = *coluna;
 			break;
@@ -372,7 +384,6 @@ void lexico(char *filename) {
 	char current[1], lookahead[1];
 	*lookahead = fgetc(src);
 
-	int state = 0;
 	struct token token;
 	do {
 		token = get_token(src, current, lookahead, &linha, &coluna);
@@ -414,10 +425,10 @@ float string_to_real(char *str) {
 
 char* string_to_text(char *str) {
         int i;
-        for(i = 0; str[i + 1] != '\0'; i++) {
+        for(i = 0; str[i + 1] != '"'; i++) {
                 str[i] = str[i + 1];
-                str[i + 1] = '\0';
         }
+	str[i] = '\0';
         return str;
 }
 
@@ -428,7 +439,8 @@ int get_reservado(char *buffer) {
 			index = i;
 			break;
 		}
-	} while(strcmp(buffer, "END") != 0);
+		i++;
+	} while(strcmp(reservado[i], "END") != 0);
 	return index;
 }
 
@@ -444,8 +456,10 @@ int get_var(char *buffer) {
 }
 
 void print_token(struct token token) {
-	printf("token: %d %d\n", token.tipo, token.valor);
+	//printf("\ntoken: %d %d\n", token.tipo, token.valor);
 	switch(token.tipo) {
+		case T_NONE:
+			return;
 		case T_INT:
 			printf("{int, %d}", int_table[token.valor][0]);
 			break;
@@ -515,5 +529,6 @@ void print_token(struct token token) {
 			printf("{comentario}");
 			break;
 	}
+	printf("\n");
 }
 

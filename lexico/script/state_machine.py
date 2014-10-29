@@ -1,5 +1,5 @@
 def main(argv=None):
-	fin = open('machine_state.csv').readlines()[1:]
+	fin = open('state_machine.csv').readlines()[1:]
 	output = "int state_machine[" + str(len(fin)) + "][128] = {\n"
 	state = 0
 	for line in fin:
@@ -13,7 +13,7 @@ def main(argv=None):
 		output = output[:-3] + "},\n"
 		state += 1
 	output = output[:-2] + "\n};"
-	fout = open('machine_state.h', 'w')
+	fout = open('include/state_machine.h', 'w')
 	fout.write(output)
 	fout.close()
 

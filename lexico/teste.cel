@@ -1,2 +1,17 @@
 BEGIN
+
+OUTPUT "Digite o Valor desejado"
+INPUT n
+
+1 => fatorial
+
+FOR (n > 0) {
+
+fatorial * n => fatorial
+n - 1 => n  
+
+}
+
+OUTPUT fatorial
+
 END
