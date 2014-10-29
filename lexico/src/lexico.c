@@ -29,7 +29,7 @@ struct token {
 
 void print_token(struct token token);
 
-#define INPUT_RANGE			256
+#define INPUT_RANGE		256
 #define SYMBOL_TABLE_SIZE	100
 #define MAX_VAR_SIZE		32
 #define MAX_TEXT_SIZE		128
@@ -81,17 +81,25 @@ char *reservado[] = {
 /**********************************************************/
 void get_next_char(FILE *src, char *current, char *lookahead) {
 	*current = *lookahead;
-	if(feof(src)) {
+	if(*current == EOF) {
 		lookahead = NULL;
 		return;
 	}
-	*lookahead = fgetc(src);
+	else
+		*lookahead = fgetc(src);
 }
 
-int next_state(int *state, char input, char buffer[32], int *buffer_idx) {
+int next_state(int *state, char input, char lookahead, char buffer[32], int *buffer_idx) {
 	buffer[*buffer_idx] = input;
 	char not_terminal[INPUT_RANGE];
 	int i, index = 0, not_final = 0;
+
+	// Quebra de linha (state = 0, input = '\n') e espaço (state = 0, input = ' ') não geram token
+	if(*state == 0 && (input == '\n' || input == ' '))
+		return not_final;
+
+	*state = state_machine[*state][(int)input];
+
 	switch(*state) {
 		case 0:
 			for(i = '0'; i <= '9'; i++)
@@ -188,15 +196,13 @@ int next_state(int *state, char input, char buffer[32], int *buffer_idx) {
 	//printf("lido: %c\n{ ", input);
 	for(i = 0; i < index; i++) {
 	//	printf("%c ", not_terminal[i]);
-		if(input == not_terminal[i]) {
+		if(lookahead == not_terminal[i]) {
 			not_final = 1;
 			break;
 		}
 	}
 	//printf("}\n");
 
-	if(not_final)
-		*state = state_machine[*state][(int)input];
 	*buffer_idx += 1;
 	buffer[*buffer_idx] = '\0';
 	return not_final;
@@ -206,23 +212,26 @@ struct token get_token(FILE *src, char *current, char *lookahead, int *linha, in
 	struct token token;
 	int state = 0;
 	char buffer[128];
-	int buffer_idx = 0;
+	int buffer_idx;
 
 	//printf("\n\nEstados: ");
-	do {
-		//printf("%d ", state);
-		get_next_char(src, current, lookahead);
-		
-		if(*current == '\n') {
-			*coluna = 0;
-			*linha =+ 1;
-		}
-		else
-			*coluna += 1;
+	while(state == 0) {
+		buffer_idx = 0;
+		do {
+			//printf("%d ", state);
+			get_next_char(src, current, lookahead);
 
-		if(*current == EOF)
-			break;
-	} while(next_state(&state, *current, buffer, &buffer_idx));
+			if(*current == '\n') {
+				*coluna = 0;
+				*linha =+ 1;
+			}
+			else
+				*coluna += 1;
+
+			if(*current == EOF)
+				break;
+		} while(next_state(&state, *current, *lookahead, buffer, &buffer_idx));
+	}
 
 	//printf("\nToken: %s\n", buffer);
 
@@ -388,7 +397,7 @@ void lexico(char *filename) {
 	do {
 		token = get_token(src, current, lookahead, &linha, &coluna);
 		print_token(token);
-	} while(current[0] != EOF);
+	} while(!(token.tipo == T_RESERVADO && (strcmp(reservado[token.valor], "END") == 0)));
 	fclose(src);
 }
 
@@ -425,8 +434,8 @@ float string_to_real(char *str) {
 
 char* string_to_text(char *str) {
         int i;
-        for(i = 0; str[i + 1] != '"'; i++) {
-                str[i] = str[i + 1];
+        for(i = 1; str[i] != '"'; i++) {
+                str[i - 1] = str[i];
         }
 	str[i] = '\0';
         return str;
@@ -441,6 +450,8 @@ int get_reservado(char *buffer) {
 		}
 		i++;
 	} while(strcmp(reservado[i], "END") != 0);
+	if(strcmp(buffer, "END") == 0)
+		index = i;
 	return index;
 }
 
