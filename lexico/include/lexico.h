@@ -45,7 +45,10 @@ typedef enum TIPO_OPERADOR {
         DIVISAO,
         MULTIPLICACAO,
         INCREMENTO,
-        DECREMENTO
+        DECREMENTO,
+	NOT,
+	AND,
+	OR
 } TIPO_OPERADOR;
 
 char *reservado[] = {

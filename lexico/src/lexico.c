@@ -134,6 +134,18 @@ struct token get_token(FILE *src, char *current, char *lookahead, int *linha, in
 				token.tipo = T_BOOLEAN;
 				token.valor = 0;
 			}
+			else if(strcmp(buffer, "NOT") == 0) {
+				token.tipo = T_OPERADOR;
+				token.valor = NOT;
+			}
+			else if(strcmp(buffer, "AND") == 0) {
+				token.tipo = T_OPERADOR;
+				token.valor = AND;
+			}
+			else if(strcmp(buffer, "OR") == 0) {
+				token.tipo = T_OPERADOR;
+				token.valor = OR;
+			}
 			else {
 				token.tipo = T_VAR;
 				index_var = get_var(buffer);
