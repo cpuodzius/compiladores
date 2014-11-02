@@ -177,9 +177,9 @@ void lexico(char *filename, struct token tokens[MAX_TOKEN_NUM]) {
 
 	unsigned int i = 0;
 	do {
-		tokens[i] = get_token(src, current, lookahead, &linha, &coluna);
-		print_token(tokens[i]);
-	} while(!(tokens[i].tipo == T_RESERVADO && (strcmp(reservado[tokens[i].valor], "END") == 0)));
+		tokens[i++] = get_token(src, current, lookahead, &linha, &coluna);
+		print_token(tokens[i - 1]);
+	} while(!(tokens[i - 1].tipo == T_RESERVADO && (strcmp(reservado[tokens[i - 1].valor], "END") == 0)));
 	fclose(src);
 }
 

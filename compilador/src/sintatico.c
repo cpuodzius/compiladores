@@ -15,12 +15,15 @@
 unsigned char programa(struct token tokens[], int *index);
 
 void sintatico(struct token tokens[]) {
-	int index;
+	int index = 0;
+	printf(">>>>>>>>>>>>>>>> SINTATICO\n");
 	programa(tokens, &index);
 }
 
 unsigned char programa(struct token tokens[], int *index) {
 	int rollback = *index;
+	printf("token %d - ", *index);
+	print_token(tokens[*index]);
 	if(TOKEN_RESERVADO(BEGIN)) {
 		*index += 1;
 		do {
