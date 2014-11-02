@@ -6,7 +6,7 @@
 #include "lexico.h"
 
 #define TOKEN(t_tipo, t_valor) (tokens[*index].tipo == t_tipo && tokens[*index] == t_valor)
-#define TOKEN_RESERVADO(t_reservado) (tokens[*index].tipo == T_RESERVADO && (strcmp(reservado[tokens[*index].valor], "t_reservado") == 0))
+#define TOKEN_RESERVADO(t_reservado) (tokens[*index].tipo == T_RESERVADO && (strcmp(reservado[tokens[*index].valor], t_reservado) == 0))
 #define ROLLBACK_ELSE	else { 				\
 				*index = rollback;	\
 				return 0;		\
@@ -24,12 +24,12 @@ unsigned char programa(struct token tokens[], int *index) {
 	int rollback = *index;
 	printf("token %d - ", *index);
 	print_token(tokens[*index]);
-	if(TOKEN_RESERVADO(BEGIN)) {
+	if(TOKEN_RESERVADO("BEGIN")) {
 		*index += 1;
 		do {
 			print_token(tokens[*index]);
 			*index += 1;
-		} while(!TOKEN_RESERVADO(END));
+		} while(!TOKEN_RESERVADO("END"));
 		print_token(tokens[*index]);
 		*index += 1;
 	}
