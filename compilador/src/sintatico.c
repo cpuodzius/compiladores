@@ -95,7 +95,17 @@ unsigned char atribuicao(struct token tokens[], int *index, struct stack *stack)
 //unsigned char termo(struct token tokens[], int *index, struct stack *stack)
 
 unsigned char leitura(struct token tokens[], int *index, struct stack *stack) {
-	return 0;
+	PUSH_MACHINE(SINTATICO_LEITURA);
+	if(TOKEN_RESERVADO("INPUT")) {
+		NEXT_TOKEN();
+		if(TOKEN_TIPO(T_VAR)) {
+			NEXT_TOKEN();
+			accepted = 1;
+			while(TOKEN_TIPO(T_VAR))
+				NEXT_TOKEN();
+		}
+	}
+	RETURN();
 }
 
 unsigned char impressao(struct token tokens[], int *index, struct stack *stack) {
