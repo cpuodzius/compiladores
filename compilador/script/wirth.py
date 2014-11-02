@@ -1,5 +1,4 @@
 def reduzir_regra(n_term, regra):
-	print regra + " -> ",
 	delimitadores = [' ', '"', '(', ')', '{', '}', '[', ']']
 	index = 0
 	while regra.find(n_term["n_term"], index) != -1:
@@ -8,7 +7,6 @@ def reduzir_regra(n_term, regra):
 			if index or regra[index - 1] in delimitadores:
 				if regra[index + len(n_term["n_term"])] in delimitadores:
 					regra = regra[:index] + "(" + n_term["regra"][:-1] + ")" + regra[(index + len(n_term["n_term"])):]
-	print regra
 
 def is_recursivo(n_term):
 	is_recursivo = False
@@ -20,6 +18,7 @@ def is_recursivo(n_term):
 	return is_recursivo
 
 def reduzir(gram):
+	for i in range(len(gram)):
 	current = gram[-1]
 	for n_term in gram:
 		if(n_term != current):

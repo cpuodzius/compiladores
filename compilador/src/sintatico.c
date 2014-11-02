@@ -8,63 +8,161 @@
 #include "sintatico.h"
 
 #define TOKEN(t_tipo, t_valor) (tokens[*index].tipo == t_tipo && tokens[*index] == t_valor)
+#define TOKEN_TIPO(t_tipo) (tokens[*index].tipo == t_tipo)
 #define TOKEN_RESERVADO(t_reservado) (tokens[*index].tipo == T_RESERVADO && (strcmp(reservado[tokens[*index].valor], t_reservado) == 0))
+#define MACHINE(maquina)	maquina(tokens, index, stack)
+#define NEXT_TOKEN()	*index += 1;
 
-#define ROLLBACK_ELSE			\
-	else { 				\
-		*index = rollback;	\
-		return 0;		\
-	}
+#define PUSH_MACHINE(machine)			\
+	unsigned char accepted = 0;		\
+	stack_push(stack, machine);
 
-#define PUSH_MACHINE(machine)	\
-	*index += 1;		\
-	rollback = *index;	\
-	stack_push(stack, machine)
+#define ROLLBACK_MACHINE()	stack_pop(stack);
 
-
+#define RETURN()			\
+	if(!accepted) {			\
+		ROLLBACK_MACHINE();	\
+	}				\
+	return accepted
 
 unsigned char programa(struct token tokens[], int *index, struct stack *stack);
 unsigned char sequencia_de_comandos(struct token tokens[], int *index, struct stack *stack);
+unsigned char comando(struct token tokens[], int *index, struct stack *stack);
+unsigned char atribuicao(struct token tokens[], int *index, struct stack *stack);
+//unsigned char expressao(struct token tokens[], int *index, struct stack *stack);
+//unsigned char exp_aritimetica(struct token tokens[], int *index, struct stack *stack);
+//unsigned char exp_logica(struct token tokens[], int *index, struct stack *stack);
+//unsigned char termo(struct token tokens[], int *index, struct stack *stack);
+unsigned char leitura(struct token tokens[], int *index, struct stack *stack);
+unsigned char impressao(struct token tokens[], int *index, struct stack *stack);
+unsigned char decisao(struct token tokens[], int *index, struct stack *stack);
+unsigned char laco(struct token tokens[], int *index, struct stack *stack);
 
 unsigned char sintatico(struct token tokens[], SINTATICO_MAQUINAS maquinas[MAX_TOKEN_NUM]) {
 	int index = 0, i;
+	unsigned char accepted = 0;
 	struct stack stack;
 	stack_init(&stack);
-	printf(">>>>>>>>>>>>>>>> SINTATICO\n");
-	if(!programa(tokens, &index, &stack)) {
-		printf("erro sintatico :: linha %d, coluna %d :: token : ", tokens[index].linha, tokens[index].coluna);
-		print_token(tokens[index]);
-	}
-	else {
+	accepted = programa(tokens, &index, &stack);
+	if(accepted) {
 		for(i = 0; i < index; i++)
 			maquinas[i] = stack.elem[i];
 	}
-	return 1;
+	else {
+		for(i = 0; i < index; i++)
+			print_machine(stack.elem[i]);
+		printf("erro sintatico :: linha %d, coluna %d :: token : ", tokens[index].linha, tokens[index].coluna);
+		print_token(tokens[index]);
+	}
+	return accepted;
 }
 
 unsigned char programa(struct token tokens[], int *index, struct stack *stack) {
-	int rollback = *index;
-	print_token(tokens[*index]);
+	PUSH_MACHINE(SINTATICO_PROGRAMA);
 	if(TOKEN_RESERVADO("BEGIN")) {
-		PUSH_MACHINE(SINTATICO_PROGRAMA);
-		if(sequencia_de_comandos(tokens, index, stack)) {
+		NEXT_TOKEN();
+		if(MACHINE(sequencia_de_comandos)) {
 			if(TOKEN_RESERVADO("END")) {
-				PUSH_MACHINE(SINTATICO_PROGRAMA);
+				NEXT_TOKEN();
+				accepted = 1;
 			}
-			ROLLBACK_ELSE
 		}
-		else
-			return 0;
 	}
-	ROLLBACK_ELSE
-	printf("TODO: programa");
-	return 1;
+	RETURN();
 }
 
 unsigned char sequencia_de_comandos(struct token tokens[], int *index, struct stack *stack) {
-	return 1;
+	PUSH_MACHINE(SINTATICO_SEQUENCIA_DE_COMANDOS);
+	while(comando(tokens, index, stack)) {}
+	accepted = 1;
+	RETURN();
 }
 
+unsigned char comando(struct token tokens[], int *index, struct stack *stack) {
+	PUSH_MACHINE(SINTATICO_COMANDO);
+	if(MACHINE(atribuicao) || MACHINE(leitura) || MACHINE(impressao) || MACHINE(decisao) || MACHINE(laco))
+		accepted = 1;
+	RETURN();
+}
+
+unsigned char atribuicao(struct token tokens[], int *index, struct stack *stack) {
+	return 0;
+}
+
+//unsigned char expressao(struct token tokens[], int *index, struct stack *stack)
+//unsigned char exp_aritimetica(struct token tokens[], int *index, struct stack *stack)
+//unsigned char exp_logica(struct token tokens[], int *index, struct stack *stack)
+//unsigned char termo(struct token tokens[], int *index, struct stack *stack)
+
+unsigned char leitura(struct token tokens[], int *index, struct stack *stack) {
+	return 0;
+}
+
+unsigned char impressao(struct token tokens[], int *index, struct stack *stack) {
+	PUSH_MACHINE(SINTATICO_IMPRESSAO);
+	if(TOKEN_RESERVADO("OUTPUT")) {
+		NEXT_TOKEN();
+		if(TOKEN_TIPO(T_TEXT) || TOKEN_TIPO(T_VAR)) {
+			NEXT_TOKEN();
+			accepted = 1;
+			while(TOKEN_TIPO(T_TEXT) || TOKEN_TIPO(T_VAR))
+				NEXT_TOKEN();
+		}
+	}
+	RETURN();
+}
+
+unsigned char decisao(struct token tokens[], int *index, struct stack *stack) {
+	return 0;
+}
+
+unsigned char laco(struct token tokens[], int *index, struct stack *stack) {
+	return 0;
+}
+
+void print_machine(SINTATICO_MAQUINAS maquina) {
+	switch(maquina) {
+        	case SINTATICO_PROGRAMA:
+			printf("Maquina: programa\n");
+			break;
+        	case SINTATICO_SEQUENCIA_DE_COMANDOS:
+			printf("Maquina: sequencia_de_comandos\n");
+			break;
+        	case SINTATICO_COMANDO:
+			printf("Maquina: comando\n");
+			break;
+        	case SINTATICO_ATRIBUICAO:
+			printf("Maquina: atribuicao\n");
+			break;
+        	case SINTATICO_EXPRESSAO:
+			printf("Maquina: expressao\n");
+			break;
+        	case SINTATICO_EXP_ARITIMETICA:
+			printf("Maquina: exp_aritmetica\n");
+			break;
+        	case SINTATICO_EXP_LOGICA:
+			printf("Maquina: exp_logica\n");
+			break;
+        	case SINTATICO_TERMO:
+			printf("Maquina: termo\n");
+			break;
+        	case SINTATICO_LEITURA:
+			printf("Maquina: leitura\n");
+			break;
+        	case SINTATICO_IMPRESSAO:
+			printf("Maquina: impressao\n");
+			break;
+        	case SINTATICO_DECISAO:
+			printf("Maquina: decisao\n");
+			break;
+        	case SINTATICO_COMPARACAO:
+			printf("Maquina: comparacao\n");
+			break;
+        	case SINTATICO_LACO:
+			printf("Maquina: laco\n");
+			break;
+	}
+}
 /*
 unsigned char programa(struct token tokens[], int *index) {
 	int rollback = *index;

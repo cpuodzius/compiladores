@@ -24,4 +24,6 @@ typedef enum SINTATICO_MAQUINAS {
 
 unsigned char sintatico(struct token tokens[], SINTATICO_MAQUINAS maquinas[MAX_MAQUINA_NUM]);
 
+void print_machine(SINTATICO_MAQUINAS maquina);
+
 #endif // __SINTATICO_H_
