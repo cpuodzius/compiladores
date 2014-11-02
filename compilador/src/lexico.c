@@ -66,7 +66,7 @@ struct token get_token(FILE *src, char *current, char *lookahead, int *linha, in
 
 			if(*current == '\n') {
 				*coluna = 0;
-				*linha =+ 1;
+				*linha += 1;
 			}
 			else
 				*coluna += 1;
