@@ -10,8 +10,6 @@ char *string_to_text(char *str);
 
 void print_token(struct token token);
 
-#define MAX_TOKEN_NUM		1000
-
 #define INPUT_RANGE		256
 #define SYMBOL_TABLE_SIZE	100
 #define MAX_VAR_SIZE		32
@@ -183,21 +181,6 @@ void lexico(char *filename, struct token tokens[MAX_TOKEN_NUM]) {
 		print_token(tokens[i]);
 	} while(!(tokens[i].tipo == T_RESERVADO && (strcmp(reservado[tokens[i].valor], "END") == 0)));
 	fclose(src);
-}
-
-void sintatico(struct token tokens[]) {
-
-}
-
-void compile(char *filename) {
-	struct token tokens[MAX_TOKEN_NUM];
-	lexico(filename, tokens);
-
-	sintatico(tokens);
-}
-
-int main() {
-	compile("teste.cel");
 }
 
 int string_to_int(char *str) {

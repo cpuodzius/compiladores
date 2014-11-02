@@ -1,6 +1,8 @@
 #ifndef __LEXICO_H_
 #define __LEXICO_H_
 
+#define MAX_TOKEN_NUM           1000
+
 typedef enum tipo {
         T_INT,
         T_REAL,
@@ -51,6 +53,7 @@ typedef enum TIPO_OPERADOR {
 	OR
 } TIPO_OPERADOR;
 
+#ifdef PALAVRAS_RESERVADAS
 char *reservado[] = {
         "BEGIN",
         "IF",
@@ -64,5 +67,11 @@ char *reservado[] = {
         "NOT",
         "END"
 };
+#else
+extern char *reservado[];
+#endif	// PALAVRAS_RESEVADAS
+
+void lexico(char *filename, struct token tokens[MAX_TOKEN_NUM]);
+void print_token(struct token token);
 
 #endif // __LEXICO_H_

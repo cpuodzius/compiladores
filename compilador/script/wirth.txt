@@ -1,0 +1,13 @@
+programa = “BEGIN” seqüência-de·comandos "END".
+seqüência-de-comandos =  { comando } . 
+comando =  ( atribuição | leitura | impressão | decisão  |  laço ) . 
+atribuição = expressão “=>” var .
+expressão= exp_aritimetica | exp_logica .
+exp_aritimetica = var [ “++” | “--” ] | termo { ( " + " | " - " | “*” | “/” ) termo } . 
+exp_logica = ( [ “NOT” ] var | int ) { (“AND” | “OR” )  ( [ “NOT” ] var | int ) } . 
+termo = ( var | int | real ) . 
+leitura = "INPUT" var { var } . 
+impressão = "OUTPUT" ( text | var ) { ( text | var ) } .
+decisão = "IF" “(“ ( exp_logica | comparacao ) “)” “{“ sequencia-de-comandos “}” "ELSE" “{“ sequencia-de-comandos “}” .
+comparação = termo ( ">" | "=" | "<" | “<=” | “>=” ) termo.
+laço = “FOR” “(“ comparacao | exp_logica “)” “{” sequencia-de-comandos “}”.
