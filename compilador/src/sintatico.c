@@ -3,40 +3,68 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "lexico.h"
+#include "util.h"
+
+#include "sintatico.h"
 
 #define TOKEN(t_tipo, t_valor) (tokens[*index].tipo == t_tipo && tokens[*index] == t_valor)
 #define TOKEN_RESERVADO(t_reservado) (tokens[*index].tipo == T_RESERVADO && (strcmp(reservado[tokens[*index].valor], t_reservado) == 0))
-#define ROLLBACK_ELSE	else { 				\
-				*index = rollback;	\
-				return 0;		\
-			}				
 
-unsigned char programa(struct token tokens[], int *index);
+#define ROLLBACK_ELSE			\
+	else { 				\
+		*index = rollback;	\
+		return 0;		\
+	}
 
-void sintatico(struct token tokens[]) {
-	int index = 0;
+#define PUSH_MACHINE(machine)	\
+	*index += 1;		\
+	rollback = *index;	\
+	stack_push(stack, machine)
+
+
+
+unsigned char programa(struct token tokens[], int *index, struct stack *stack);
+unsigned char sequencia_de_comandos(struct token tokens[], int *index, struct stack *stack);
+
+unsigned char sintatico(struct token tokens[], SINTATICO_MAQUINAS maquinas[MAX_TOKEN_NUM]) {
+	int index = 0, i;
+	struct stack stack;
+	stack_init(&stack);
 	printf(">>>>>>>>>>>>>>>> SINTATICO\n");
-	programa(tokens, &index);
+	if(!programa(tokens, &index, &stack)) {
+		printf("erro sintatico :: linha %d, coluna %d :: token : ", tokens[index].linha, tokens[index].coluna);
+		print_token(tokens[index]);
+	}
+	else {
+		for(i = 0; i < index; i++)
+			maquinas[i] = stack.elem[i];
+	}
+	return 1;
 }
 
-unsigned char programa(struct token tokens[], int *index) {
+unsigned char programa(struct token tokens[], int *index, struct stack *stack) {
 	int rollback = *index;
-	printf("token %d - ", *index);
 	print_token(tokens[*index]);
 	if(TOKEN_RESERVADO("BEGIN")) {
-		*index += 1;
-		do {
-			print_token(tokens[*index]);
-			*index += 1;
-		} while(!TOKEN_RESERVADO("END"));
-		print_token(tokens[*index]);
-		*index += 1;
+		PUSH_MACHINE(SINTATICO_PROGRAMA);
+		if(sequencia_de_comandos(tokens, index, stack)) {
+			if(TOKEN_RESERVADO("END")) {
+				PUSH_MACHINE(SINTATICO_PROGRAMA);
+			}
+			ROLLBACK_ELSE
+		}
+		else
+			return 0;
 	}
 	ROLLBACK_ELSE
 	printf("TODO: programa");
 	return 1;
 }
+
+unsigned char sequencia_de_comandos(struct token tokens[], int *index, struct stack *stack) {
+	return 1;
+}
+
 /*
 unsigned char programa(struct token tokens[], int *index) {
 	int rollback = *index;

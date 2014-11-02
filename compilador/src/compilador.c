@@ -3,9 +3,9 @@
 
 void compile(char *filename) {
         struct token tokens[MAX_TOKEN_NUM];
+	SINTATICO_MAQUINAS maquinas[MAX_MAQUINA_NUM];
         lexico(filename, tokens);
-
-	sintatico(tokens);
+	sintatico(tokens, maquinas);
 }
 
 int main() {
