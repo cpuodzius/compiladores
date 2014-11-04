@@ -12,6 +12,7 @@ lexico: src/lexico.c include/state_machine.h
 
 sintatico: src/sintatico.c
 	make util
+	#$(CC) src/$@.c -c -g -o bin/$@.o -DDEBUG $(CFLAGS)
 	$(CC) src/$@.c -c -g -o bin/$@.o $(CFLAGS)
 
 compilador: src/compilador.c
