@@ -11,14 +11,6 @@ char *string_to_text(char *str);
 void print_token(struct token token);
 
 #define INPUT_RANGE		256
-#define SYMBOL_TABLE_SIZE	100
-#define MAX_VAR_SIZE		32
-#define MAX_TEXT_SIZE		128
-
-char var_table[SYMBOL_TABLE_SIZE][MAX_VAR_SIZE];
-int int_table[SYMBOL_TABLE_SIZE][MAX_VAR_SIZE];
-float real_table[SYMBOL_TABLE_SIZE][MAX_VAR_SIZE];
-char text_table[SYMBOL_TABLE_SIZE][MAX_TEXT_SIZE];
 
 unsigned int var_table_index = 0;
 unsigned int int_table_index = 0;

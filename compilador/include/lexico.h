@@ -71,6 +71,15 @@ char *reservado[] = {
 extern char *reservado[];
 #endif	// PALAVRAS_RESEVADAS
 
+#define SYMBOL_TABLE_SIZE       100
+#define MAX_VAR_SIZE            32
+#define MAX_TEXT_SIZE           128
+
+char var_table[SYMBOL_TABLE_SIZE][MAX_VAR_SIZE];
+int int_table[SYMBOL_TABLE_SIZE][MAX_VAR_SIZE];
+float real_table[SYMBOL_TABLE_SIZE][MAX_VAR_SIZE];
+char text_table[SYMBOL_TABLE_SIZE][MAX_TEXT_SIZE];
+
 void lexico(char *filename, struct token tokens[MAX_TOKEN_NUM]);
 void print_token(struct token token);
 
